@@ -5,6 +5,7 @@ from typing import Optional
 import typer
 import uvicorn
 from pytz import timezone
+from recurrent import RecurringEvent
 
 from . import api
 from .auth import AuthenticationError
@@ -14,6 +15,7 @@ from .cron_generator import generate_booking_cron_job
 from .errors import BookingError
 from .main import try_book_class, try_authenticate
 from .notify.notify import notify_booking_failure, notify_auth_failure
+from .recurrence.recurrence import is_date_within_recurrence_str
 from .utils.time_utils import readable_seconds
 from .api import api as api_app, get_configs
 
@@ -137,6 +139,13 @@ def serve_api(
     configs = [config_from_stream(cs) for cs in config_streams]
     api_app.dependency_overrides[get_configs] = lambda: configs
     uvicorn.main.main(args=ctx.args)
+
+
+@cli.command()
+def recurrent(
+        rule_str: str
+):
+    is_date_within_recurrence_str(datetime.now(), rule_str)
 
 
 @cli.callback()

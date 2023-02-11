@@ -31,6 +31,8 @@ slack-sdk = "^3.19.5"
 uvicorn = "^0.20.0"
 python-multipart = "^0.0.5"
 dataclass-wizard = {extras = ["yaml"], version = "^0.22.2"}
+recurrent = "^0.4.1"
+python-dateutil = "^2.8.2"
 
 
 [tool.poetry.group.dev.dependencies]
