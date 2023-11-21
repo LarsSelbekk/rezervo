@@ -1,11 +1,12 @@
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import pytz
 from icalendar import cal  # type: ignore[import]
 
 from rezervo.models import SessionState
+from rezervo.schemas.config.config import ConfigValue
 from rezervo.schemas.schedule import UserSession
 from rezervo.utils.str_utils import format_name_list_to_natural
 
@@ -14,7 +15,9 @@ def generate_calendar_token():
     return secrets.token_urlsafe()
 
 
-def ical_event_from_session(session: UserSession, timezone: str) -> Optional[cal.Event]:
+def ical_event_from_session(
+    session: UserSession, config: ConfigValue, timezone: str
+) -> Optional[cal.Event]:
     _class = session.class_data
     if _class is None:
         return None
@@ -42,6 +45,18 @@ def ical_event_from_session(session: UserSession, timezone: str) -> Optional[cal
         if session.status in [SessionState.BOOKED, SessionState.CONFIRMED]
         else "TENTATIVE",
     )
+    if (
+        config.notifications is not None
+        and config.notifications.reminder_hours_before is not None
+    ):
+        alarm = cal.Alarm()
+        minutes = round(config.notifications.reminder_hours_before * 60)
+        # This doesn't seem to work in a calendar subscription feed. Tested on Outlook (new version of Windows Mail),
+        # Google Calendar. Tried adding UID and X-WR-ALARMUID, didn't help. Also tried changing action to DISPLAY,
+        # no dice. From an internet search, it just doesn't seem to be supported.
+        alarm.add("trigger", timedelta(minutes=-minutes))
+        alarm.add("action", "AUDIO")
+        event.add_component(alarm)
     event.add(
         "sequence",
         # Not strictly compliant, but the status will generally follow this order (except UNKNOWN)

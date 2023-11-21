@@ -56,7 +56,8 @@ def get_calendar(token: str, include_past: bool = True, db: Session = Depends(ge
     for s in sessions_query.all():
         if s.class_data is None:
             continue
-        event = ical_event_from_session(UserSession.from_orm(s), timezone)
+        user_config = crud.get_user_config(db, db_user).config
+        event = ical_event_from_session(UserSession.from_orm(s), user_config, timezone)
         if event is not None:
             ical.add_component(event)
     return Response(content=ical.to_ical(), media_type="text/calendar")
